@@ -1,0 +1,18 @@
+# TODO: Update with exact module version
+numpy==1.24.4
+opencv_python
+loguru
+tqdm
+thop
+ninja
+tabulate
+psutil
+tensorboard
+paddleocr==2.7.0.1
+paddlepaddle==2.6.2
+pycocotools>=2.0.2
+onnx>=1.13.0
+onnx-simplifier==0.4.10
+
+
+ 
