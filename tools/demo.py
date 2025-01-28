@@ -6,17 +6,14 @@ import argparse
 import os
 import time
 from loguru import logger
-
+import torch
 import cv2
 import numpy as np
-import torch
-import matplotlib.pyplot as plt
 from yolox.data.data_augment import ValTransform
 from yolox.data.datasets import COCO_CLASSES
 from yolox.exp import get_exp
-from yolox.utils import fuse_model, get_model_info, postprocess, vis
+from yolox.utils import fuse_model, get_model_info, postprocess
 from paddleocr import PaddleOCR
-from paddleocr import draw_ocr
 from fast_plate_ocr import ONNXPlateRecognizer
 
 IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
@@ -122,7 +119,8 @@ class Predictor(object):
         self.device = device
         self.fp16 = fp16
         self.preproc = ValTransform(legacy=legacy)
-        self.ocr = PaddleOCR(use_angle_cls=True, lang='en')#, rec_model_dir= "pretrained_model_ocr/en_PP-OCRv4_rec_infer", det_model_dir= "pretrained_model_ocr/en_PP-OCRv3_det_infer") 
+        # , rec_model_dir= "pretrained_model_ocr/en_PP-OCRv4_rec_infer", det_model_dir= "pretrained_model_ocr/en_PP-OCRv3_det_infer")
+        self.ocr = PaddleOCR(use_angle_cls=True, lang='en')
         self.fastocr = ONNXPlateRecognizer('european-plates-mobile-vit-v2-model')
         if trt_file is not None:
             from torch2trt import TRTModule
@@ -176,7 +174,7 @@ class Predictor(object):
         ratio = img_info["ratio"]
         img = img_info["raw_img"]
         if output is None:
-            return img, 0 , ""
+            return img, 0, ""
         output = output.cpu()
 
         bboxes = output[:, 0:4]
@@ -194,7 +192,6 @@ class Predictor(object):
             if score >= self.confthre:
                 x0, y0, x1, y1 = map(int, box_val)
                 roi = img[y0:y1, x0:x1]
-                
 
                 x0 = int(box_val[0])
                 y0 = int(box_val[1])
@@ -202,23 +199,8 @@ class Predictor(object):
                 y1 = int(box_val[3])
 
                 text = ''
-                # roi_resized = cv2.resize(roi, (100, 100), interpolation=cv2.INTER_CUBIC)
-                result = self.ocr.ocr(roi, cls=False)# det=True,
+                result = self.ocr.ocr(roi, cls=False)  # det=True,
 
-                # # Draw OCR results on the cropped license plate
-                # boxes = [line[0] for line in result[0]]
-                # texts = [line[1][0] for line in result[0]]
-                # scores = [line[1][1] for line in result[0]]
-
-                # # Annotate the image
-                # annotated_plate = draw_ocr(roi, boxes, texts, scores)
-
-                # # Show the annotated image
-                # plt.imshow(cv2.cvtColor(annotated_plate, cv2.COLOR_BGR2RGB))
-                # plt.title(f"License Plate")
-                # plt.show()
-
-                # cv2.imwrite("YOLOX_outputs/yolox_s/roi/"+ img_info["file_name"], roi)
                 for idx in range(len(result)):
                     res = result[idx]
                     if res != None:
@@ -230,7 +212,7 @@ class Predictor(object):
                     text = output[0]
 
                 if text != "":
-                    count += 1 
+                    count += 1
                     total_text.append(text)
                     bg_color = (51, 159, 255)
                     font = cv2.FONT_HERSHEY_DUPLEX
@@ -246,7 +228,7 @@ class Predictor(object):
                     )
                     cv2.putText(img, text, (x0, y0 - int(0.5 * txt_size[1])), font, text_scale, (0, 0, 0),
                                 thickness=thickeness, lineType=cv2.LINE_AA)
-       
+
         return img, count, text
 
 
@@ -259,8 +241,8 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
     new_count = 0
     for image_name in files:
         outputs, img_info = predictor.inference(image_name)
-        print("OUT=======0", outputs)
-        result_image , count, output_text = predictor.visual(outputs[0], img_info, predictor.confthre)
+        result_image, count, output_text = predictor.visual(
+            outputs[0], img_info, predictor.confthre)
         new_count += count
         if save_result:
             save_folder = os.path.join(
@@ -273,8 +255,7 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
         ch = cv2.waitKey(0)
         if ch == 27 or ch == ord("q") or ch == ord("Q"):
             break
-        print("OCR Result", output_text)
-    print("Total count==>", new_count)
+
 
 def imageflow_demo(predictor, vis_folder, current_time, args):
     cap = cv2.VideoCapture(args.path if args.demo == "video" else args.camid)
@@ -298,7 +279,8 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
         ret_val, frame = cap.read()
         if ret_val:
             outputs, img_info = predictor.inference(frame)
-            result_frame, count, output_text = predictor.visual(outputs[0], img_info, predictor.confthre)
+            result_frame, count, output_text = predictor.visual(
+                outputs[0], img_info, predictor.confthre)
             if args.save_result:
                 vid_writer.write(result_frame)
             else:

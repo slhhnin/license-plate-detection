@@ -621,7 +621,6 @@ class YOLOXHead(nn.Module):
                 fg_mask = outputs.new_zeros(total_num_anchors).bool()
             else:
                 gt_bboxes_per_image = label[:num_gt, 1:5]
-                
                 gt_classes = label[:num_gt, 0]
 
                 # # Filter only class ID 2
@@ -632,11 +631,7 @@ class YOLOXHead(nn.Module):
 
                 # gt_bboxes_per_image = gt_bboxes_per_image[class_2_mask]
                 # gt_classes = gt_classes[class_2_mask]
-
-                print("gtCLasses------------------", gt_classes.shape, gt_bboxes_per_image.shape)
-
                 bboxes_preds_per_image = bbox_preds[batch_idx]
-
 
                 _, fg_mask, _, matched_gt_inds, _ = self.get_assignments(  # noqa
                     batch_idx, num_gt, gt_bboxes_per_image, gt_classes,

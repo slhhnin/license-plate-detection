@@ -10,6 +10,7 @@ psutil
 tensorboard
 paddleocr==2.7.0.1
 paddlepaddle==2.6.2
+fast_plate_ocr
 pycocotools>=2.0.2
 onnx>=1.13.0
 onnx-simplifier==0.4.10
