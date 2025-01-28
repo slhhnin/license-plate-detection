@@ -119,9 +119,8 @@ class Predictor(object):
         self.device = device
         self.fp16 = fp16
         self.preproc = ValTransform(legacy=legacy)
-        # , rec_model_dir= "pretrained_model_ocr/en_PP-OCRv4_rec_infer", det_model_dir= "pretrained_model_ocr/en_PP-OCRv3_det_infer")
-        self.ocr = PaddleOCR(use_angle_cls=True, lang='en')
-        self.fastocr = ONNXPlateRecognizer('european-plates-mobile-vit-v2-model')
+        self.ocr = PaddleOCR(use_angle_cls=True, lang="en")
+        self.fastocr = ONNXPlateRecognizer("european-plates-mobile-vit-v2-model")
         if trt_file is not None:
             from torch2trt import TRTModule
 
@@ -164,13 +163,18 @@ class Predictor(object):
             if self.decoder is not None:
                 outputs = self.decoder(outputs, dtype=outputs.type())
             outputs = postprocess(
-                outputs, self.num_classes, self.confthre,
-                self.nmsthre, class_agnostic=True
+                outputs,
+                self.num_classes,
+                self.confthre,
+                self.nmsthre,
+                class_agnostic=True,
             )
             logger.info("Infer time: {:.4f}s".format(time.time() - t0))
         return outputs, img_info
 
-    def visual(self, output, img_info, cls_conf=0.35, text_scale=0.5, padding=5, thickeness=1):
+    def visual(
+        self, output, img_info, cls_conf=0.35, text_scale=0.5, padding=5, thickeness=1
+    ):
         ratio = img_info["ratio"]
         img = img_info["raw_img"]
         if output is None:
@@ -198,12 +202,12 @@ class Predictor(object):
                 x1 = int(box_val[2])
                 y1 = int(box_val[3])
 
-                text = ''
+                text = ""
                 result = self.ocr.ocr(roi, cls=False)  # det=True,
 
                 for idx in range(len(result)):
                     res = result[idx]
-                    if res != None:
+                    if res is not None:
                         for line in res:
                             text += line[1][0] + " "
                 if text == "":
@@ -224,10 +228,18 @@ class Predictor(object):
                         (x0, y0 - txt_size[1] - padding - 5),
                         (x0 + txt_size[0] + 2, y0 - 5),
                         bg_color,
-                        -1
+                        -1,
                     )
-                    cv2.putText(img, text, (x0, y0 - int(0.5 * txt_size[1])), font, text_scale, (0, 0, 0),
-                                thickness=thickeness, lineType=cv2.LINE_AA)
+                    cv2.putText(
+                        img,
+                        text,
+                        (x0, y0 - int(0.5 * txt_size[1])),
+                        font,
+                        text_scale,
+                        (0, 0, 0),
+                        thickness=thickeness,
+                        lineType=cv2.LINE_AA,
+                    )
 
         return img, count, text
 
@@ -242,7 +254,8 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
     for image_name in files:
         outputs, img_info = predictor.inference(image_name)
         result_image, count, output_text = predictor.visual(
-            outputs[0], img_info, predictor.confthre)
+            outputs[0], img_info, predictor.confthre
+        )
         new_count += count
         if save_result:
             save_folder = os.path.join(
@@ -280,7 +293,8 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
         if ret_val:
             outputs, img_info = predictor.inference(frame)
             result_frame, count, output_text = predictor.visual(
-                outputs[0], img_info, predictor.confthre)
+                outputs[0], img_info, predictor.confthre
+            )
             if args.save_result:
                 vid_writer.write(result_frame)
             else:
@@ -355,8 +369,14 @@ def main(exp, args):
         decoder = None
 
     predictor = Predictor(
-        model, exp, COCO_CLASSES, trt_file, decoder,
-        args.device, args.fp16, args.legacy,
+        model,
+        exp,
+        COCO_CLASSES,
+        trt_file,
+        decoder,
+        args.device,
+        args.fp16,
+        args.legacy,
     )
     current_time = time.localtime()
     if args.demo == "image":

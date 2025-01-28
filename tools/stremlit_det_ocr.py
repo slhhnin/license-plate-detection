@@ -15,7 +15,9 @@ from demo import Predictor
 def image_demo(predictor, vis_folder, image, current_time, img_name, save_result):
 
     outputs, img_info = predictor.inference(image)
-    result_image, count, output_text = predictor.visual(outputs[0], img_info, predictor.confthre)
+    result_image, count, output_text = predictor.visual(
+        outputs[0], img_info, predictor.confthre
+    )
 
     if save_result:
         save_folder = os.path.join(
@@ -92,13 +94,25 @@ def main(exp, args):
         decoder = None
 
     predictor = Predictor(
-        model, exp, COCO_CLASSES, trt_file, decoder,
-        args["device"], args["fp16"], args["legacy"],
+        model,
+        exp,
+        COCO_CLASSES,
+        trt_file,
+        decoder,
+        args["device"],
+        args["fp16"],
+        args["legacy"],
     )
     current_time = time.localtime()
     # if args.demo == "image":
     result_image, ocr_result = image_demo(
-        predictor, vis_folder, args["path"], current_time, args["img_name"], args["save_result"])
+        predictor,
+        vis_folder,
+        args["path"],
+        current_time,
+        args["img_name"],
+        args["save_result"],
+    )
     result_image = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
     # Create table content
 
@@ -110,9 +124,9 @@ def main(exp, args):
     with col1:
         st.image(result_image, caption="Detected Image")
     with col2:
-        st.write(f"**OCR Result:** \n")
+        st.write("**OCR Result:** \n")
         st.markdown(
-            f"<span style='background-color: rgb(255, 159, 51); font-weight: bold;'>{ocr_result}</span>",
+            f"<span style='background-color: rgb(255, 159, 51);'>{ocr_result}</span>",
             unsafe_allow_html=True,
         )
 
@@ -127,7 +141,9 @@ if __name__ == "__main__":
     model_name = st.sidebar.text_input("Model Name", value="yolox-s")
 
     # Experiment file and checkpoint
-    exp_file = st.sidebar.text_input("Experiment File (exp_file)", value="exps/default/yolox_s.py")
+    exp_file = st.sidebar.text_input(
+        "Experiment File (exp_file)", value="exps/default/yolox_s.py"
+    )
 
     checkpoint = st.file_uploader("Upload a checkpoint file", type=[".pth"])
     # Check if checkpoint is empty
@@ -139,10 +155,18 @@ if __name__ == "__main__":
     # Device, confidence, and other options
     device = st.sidebar.selectbox("Device", options=["cpu", "gpu"], index=0)
     conf_threshold = st.sidebar.slider(
-        "Confidence Threshold (conf)", min_value=0.0, max_value=1.0, value=0.3, step=0.01)
+        "Confidence Threshold (conf)",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.3,
+        step=0.01,
+    )
     nms_threshold = st.sidebar.slider(
-        "NMS Threshold (nms)", min_value=0.0, max_value=1.0, value=0.3, step=0.01)
-    test_img_size = st.sidebar.number_input("Test Image Size (tsize)", value=640, step=32)
+        "NMS Threshold (nms)", min_value=0.0, max_value=1.0, value=0.3, step=0.01
+    )
+    test_img_size = st.sidebar.number_input(
+        "Test Image Size (tsize)", value=640, step=32
+    )
 
     save_result = st.sidebar.checkbox("Save Inference Result", value=False)
     # Advanced options
